@@ -1,0 +1,441 @@
+public class MappingServices {
+	private String firstCompanyName = null;
+	private String secondCompanyName = null;
+	private String firstServiceName = null;
+	private String secondServiceName = null;
+	private String analysisOption = null;
+	private String displayMode = null;
+	private SimilarityCheckScreen similarityCheckScreen = null;
+	
+	int mandatoryFunctionTotalCount = 0;
+	int secondaryFunctionTotalCount = 0;
+	int matchedMandatoryTotalNumber = 0;
+	int matchedSecondaryTotalNumber = 0;
+	int matchedTotalNumber = 0;
+	
+	double totalMandatoryValue = 0.0;
+	double totalSecondaryValue = 0.0;
+	
+	double totalDetailValue = 0.0;
+	
+	public MappingServices(String firstCompanyName, String secondCompanyName, String firstServiceName, String secondServiceName, 
+						   String analysisOption, String displayMode, SimilarityCheckScreen similarityCheckScreen){
+		this.initializeMember(firstCompanyName, secondCompanyName, firstServiceName, secondServiceName, 
+							  analysisOption, displayMode, similarityCheckScreen);
+		this.processMapping();
+	} 
+	//멤버 변수 초기화
+	public void initializeMember(String firstCompanyName, String secondCompanyName, String firstServiceName, String secondServiceName, 
+								 String analysisOption, String displayMode, SimilarityCheckScreen similarityCheckScreen){
+		this.firstCompanyName = firstCompanyName;
+		this.secondCompanyName = secondCompanyName;
+		this.firstServiceName = firstServiceName;
+		this.secondServiceName = secondServiceName;
+		this.analysisOption = analysisOption;
+	    this.displayMode = displayMode;
+		this.similarityCheckScreen = similarityCheckScreen;
+	}
+	//서비스 맵핑 처리
+	public void processMapping(){
+		String[] firstServicePropertyList = MainFrame.serviceQuery.getPropertyByServiceName(firstCompanyName, firstServiceName);		
+		String[] secondServicePropertyList = MainFrame.serviceQuery.getPropertyByServiceName(secondCompanyName, secondServiceName);
+		
+		if(analysisOption.equals("Semantic Self Similarity")){			//Semantics Self Similarity 옵션
+			compareServicesAttributes(firstServicePropertyList, secondServicePropertyList, false);
+		}else if(analysisOption.equals("Semantic Boundary Similarity")){	//Semantics Boundary Similarity 옵션
+			compareServicesAttributes(firstServicePropertyList, secondServicePropertyList, true);
+		}
+	}
+	//서비스 속성들 비교 처리
+	public void compareServicesAttributes(String[] firstServicePropertyList, String[] secondServicePropertyList, boolean boundaryOption){
+		//같은 속성 개수
+		int matchPropertyNumber = 0;
+		//필수속성
+		double mandatoryServiceSimilarity = 0.0;
+		//부가속성
+		double secondaryServiceSimilarity = 0.0;
+		
+		//부모, 자식 서비스 저장(첫번째 회사)
+		String firstParentService = firstServicePropertyList[firstServicePropertyList.length - 2];
+		String firstChildService = firstServicePropertyList[firstServicePropertyList.length - 1];
+		
+		//부모, 자식 서비스 저장(두번째 회사)
+		String secondParentService = secondServicePropertyList[secondServicePropertyList.length - 2];
+		String secondChildService = secondServicePropertyList[secondServicePropertyList.length - 1];
+		
+		//Self Service 옵션일 경우
+		if(boundaryOption == false){
+			//2개의 서비스들의 속성 비교
+			for(int propertyListIndex = 0; propertyListIndex < (firstServicePropertyList.length)-2; propertyListIndex++){
+
+				//2개 서비스들의 속성이 일치하면
+				if(firstServicePropertyList[propertyListIndex].compareTo(secondServicePropertyList[propertyListIndex]) == 0){				
+
+					//속성이 MandatoryFunction 이면
+					if(propertyListIndex == 10){
+						mandatoryServiceSimilarity = 75.0;	//75%
+					}
+					//속성이 SecondaryFunction 이면
+					else if(propertyListIndex == 11){
+						secondaryServiceSimilarity = 25.0;	//25%
+					}
+					//Identifying Attributes 이거나 Selective Attributes 또는 Relational Attributes이면
+					else{
+						matchPropertyNumber++;		
+					}
+				}
+				//일치하지 않고 속성이 MandatoryFunction이면
+				else if(propertyListIndex == 10){
+					//MandatoryFunction의 값을 저장
+					String firstServiceMandatoryFunction = firstServicePropertyList[propertyListIndex];
+					String secondServiceMandatoryFunction = secondServicePropertyList[propertyListIndex];
+
+					//전체 문자열 길이 - 콤마 제거한 문자열 길이 = 콤마 개수
+					int firstServiceCommaCount = 
+							firstServiceMandatoryFunction.length() - (firstServiceMandatoryFunction.replaceAll(",", "")).length();
+					int secondServiceCommaCount = 
+							secondServiceMandatoryFunction.length() - (secondServiceMandatoryFunction.replaceAll(",", "")).length();
+
+					//Functional Attributes 처리
+					int matchMandatoryFunctionNumber = handleFunctionalAttributes(
+							firstServiceCommaCount, secondServiceCommaCount, firstServiceMandatoryFunction, secondServiceMandatoryFunction);
+
+					//(일치된 속성 개수 * 2 * 75) / (첫번째 서비스의 필수 속성들 개수 + 두번째 서비스의 필수 속성들 개수)
+					mandatoryServiceSimilarity = 
+							(double)(matchMandatoryFunctionNumber*2*75) / ((firstServiceCommaCount+1) + (secondServiceCommaCount+1));
+				}
+				//일치하지 않고 속성이 SecondaryFunction이면
+				else if(propertyListIndex == 11){
+					//SecondaryFunction의 값을 저장
+					String firstServiceMandatoryFunction = firstServicePropertyList[propertyListIndex];
+					String secondServiceMandatoryFunction = secondServicePropertyList[propertyListIndex];
+
+					//전체 문자열 길이 - 콤마 제거한 문자열 길이
+					int firstServiceCommaCount = 
+							firstServiceMandatoryFunction.length() - (firstServiceMandatoryFunction.replaceAll(",", "")).length();
+					int secondServiceCommaCount = 
+							secondServiceMandatoryFunction.length() - (secondServiceMandatoryFunction.replaceAll(",", "")).length();
+
+					//Functional Attributes 처리
+					int matchMandatoryFunctionNumber = handleFunctionalAttributes(
+							firstServiceCommaCount, secondServiceCommaCount, firstServiceMandatoryFunction, secondServiceMandatoryFunction);
+
+					//(일치된 속성 개수 * 2 * 25) / (첫번째 서비스의 부가 속성들 개수 + 두번째 서비스의 부가 속성들 개수)
+					secondaryServiceSimilarity = 
+							(double)(matchMandatoryFunctionNumber*2*25) / ((firstServiceCommaCount+1) + (secondServiceCommaCount+1));
+				}
+				else{}
+			}		
+			///////////////////////////////////////////////////////////////////////////////////
+			//기능 기반 의미적 유사성 적중률 측정
+			String similarityLevel = null;
+			if(mandatoryServiceSimilarity == (double)75){	//필수기능이 모두 일치시
+				System.out.println("Similar semantics occurs");
+				if(secondaryServiceSimilarity == (double)25){		//부가기능이 모두 일치시
+					System.out.println("Same semantics occurs");
+				}else{												//부가기능이 일치하지 않을 시
+					System.out.println("Similar semantics occurs");
+				}
+			}
+			else{											//필수기능이 일치하지 않을 시
+				System.out.println("Service similarity doesn't occur");
+			}
+			double basicServiceSimilarity = mandatoryServiceSimilarity + secondaryServiceSimilarity; //기능 기반 의미적(기본) 유사성(75% + 25%)
+			//적중율이 75%이상이면
+			if(basicServiceSimilarity >= (double)75){	
+				similarityLevel = "High";
+				System.out.println("High");
+				System.out.println("Service similarity occurs");
+			}
+			//적중율이 50이상 75미만이면
+			else if(basicServiceSimilarity >= (double)50 && basicServiceSimilarity < (double)75){
+				similarityLevel = "Middle";
+				System.out.println("Middle");
+				System.out.println("Service similarity can occur");
+			}
+			//적중율이 50미만이면
+			else{
+				similarityLevel = "Low";
+				System.out.println("Low");
+				System.out.println("Service similarity doesn't occur");
+			}
+			///////////////////////////////////////////////////////////////////////////////////
+
+			///////////////////////////////////////////////////////////////////////////////////
+			//속성 기반 의미적 유사성 적중률 측정
+			String similarityLevel2 = null;
+			double detailServiceSimilarity = 0.0;
+			if(basicServiceSimilarity >= (double)75){	//기능 기반 유사성 분석 결과가 75%이상이면 
+				detailServiceSimilarity = (double)(matchPropertyNumber * 100) / 13; //속성 기반 의미적(상세) 유사성(식별, 선택) - 13개 속성
+
+				//적중율이 75%이상이면
+				if(detailServiceSimilarity >= (double)75){	
+					similarityLevel2 = "High";
+					System.out.println("High");
+					System.out.println("Service similarity occurs");
+				}
+				//적중율이 50이상 75미만이면
+				else if(detailServiceSimilarity >= (double)50 && detailServiceSimilarity < (double)75){
+					similarityLevel2 = "Middle";
+					System.out.println("Middle");
+					System.out.println("Service similarity can occur");
+				}
+				//적중율이 50미만이면
+				else{
+					similarityLevel2 = "Low";
+					System.out.println("Low");
+					System.out.println("Service similarity doesn't occur");
+				}
+			}
+			else{}
+			///////////////////////////////////////////////////////////////////////////////////
+
+			///////////////////////////////////////////////////////////////////////////////////
+			//적중율(소수 2째자리 까지 표시)
+			String hitRatio = null;
+			String resultLevel = null;
+			if(displayMode.equals("Function based")){	//기능 기반 디스플레이 모드
+				hitRatio = String.format("%.2f", basicServiceSimilarity);
+				resultLevel = similarityLevel;
+			}
+			else if(displayMode.equals("Total property based")){	//기능 + 속성 기반 디스플레이 모드
+				hitRatio = String.format("%.2f", (detailServiceSimilarity+basicServiceSimilarity)/2);
+				resultLevel = similarityLevel2;
+			}
+			
+			//결과 화면에 표시
+			similarityCheckScreen.setMappingResult(hitRatio, resultLevel, displayMode, false);
+			///////////////////////////////////////////////////////////////////////////////////
+		}
+		///////////////////////////////////////////////////////////////////////////////////
+		///////////////////////////////////////////////////////////////////////////////////
+		///////////////////////////////////////////////////////////////////////////////////
+		//Boundary Service일 경우
+		else{
+			for(int i=0; i<3; i++){
+				//Self
+				if(i==0){
+					processMatch(firstServicePropertyList, secondServicePropertyList);
+				}
+				//Pre
+				else if(i==1){
+					String[] firstPropertyList = MainFrame.serviceQuery.getPropertyByServiceName(firstCompanyName, firstParentService);		
+					String[] secondPropertyList = MainFrame.serviceQuery.getPropertyByServiceName(secondCompanyName, secondParentService);
+					processMatch(firstPropertyList, secondPropertyList);
+				}
+				//Post
+				else if(i==2){
+					String[] firstPropertyList = MainFrame.serviceQuery.getPropertyByServiceName(firstCompanyName, firstChildService);		
+					String[] secondPropertyList = MainFrame.serviceQuery.getPropertyByServiceName(secondCompanyName, secondChildService);
+					processMatch(firstPropertyList, secondPropertyList);
+				}
+			}
+			///////////////////////////////////////////////////////////////////////////////////
+			//기능 기반 의미적 유사성 적중률 측정
+			totalMandatoryValue = totalMandatoryValue / 3;
+			System.out.println("필수기능 : " + totalMandatoryValue);
+			String functionalSimilarityLevel = null;
+			if(totalMandatoryValue == (double)75){	//필수기능이 모두 일치시
+				System.out.println("Similar semantics occurs");
+				totalSecondaryValue = totalSecondaryValue / 3;
+				System.out.println("부가기능 : " + totalSecondaryValue);
+				if(totalSecondaryValue == (double)25){		//부가기능이 모두 일치시
+					System.out.println("Same semantics occurs");
+				}else{												//부가기능이 일치하지 않을 시
+					System.out.println("Similar semantics occurs");
+				}
+			}
+			else{											//필수기능이 일치하지 않을 시
+				totalSecondaryValue = 0.0;
+				System.out.println("Service similarity doesn't occur");
+			}
+			double basicServiceSimilarity = totalMandatoryValue + totalSecondaryValue; //기능 기반 의미적(기본) 유사성(75% + 25%)
+			System.out.println("기능 기반 의미적 유사성 : " + basicServiceSimilarity);
+			
+			//적중율이 75%이상이면
+			if(basicServiceSimilarity >= (double)75){	
+				functionalSimilarityLevel = "High";
+				System.out.println("High");
+				System.out.println("Service similarity occurs");
+			}
+			//적중율이 50이상 75미만이면
+			else if(basicServiceSimilarity >= (double)50 && basicServiceSimilarity < (double)75){
+				functionalSimilarityLevel = "Middle";
+				System.out.println("Middle");
+				System.out.println("Service similarity can occur");
+			}
+			//적중율이 50미만이면
+			else{
+				functionalSimilarityLevel = "Low";
+				System.out.println("Low");
+				System.out.println("Service similarity doesn't occur");
+			}
+			///////////////////////////////////////////////////////////////////////////////////
+
+			///////////////////////////////////////////////////////////////////////////////////
+			//속성 기반 의미적 유사성 적중률 측정
+			String detailSimilarityLevel = null;
+			totalDetailValue = totalDetailValue / 3;
+			
+			//if(basicServiceSimilarity >= (double)75){	//기능 기반 유사성 분석 결과가 75%이상이면 
+				System.out.println("속성 기반 의미적 유사성 : " + totalDetailValue);
+				//적중율이 75%이상이면
+				if(totalDetailValue >= (double)75){	
+					detailSimilarityLevel = "High";
+					System.out.println("High");
+					System.out.println("Service similarity occurs");
+				}
+				//적중율이 50이상 75미만이면
+				else if(totalDetailValue >= (double)50 && totalDetailValue < (double)75){
+					detailSimilarityLevel = "Middle";
+					System.out.println("Middle");
+					System.out.println("Service similarity can occur");
+				}
+				//적중율이 50미만이면
+				else{
+					detailSimilarityLevel = "Low";
+					System.out.println("Low");
+					System.out.println("Service similarity doesn't occur");
+				}
+				
+				
+			//}
+			//else{}
+			///////////////////////////////////////////////////////////////////////////////////
+
+			///////////////////////////////////////////////////////////////////////////////////
+			//적중율(소수 2째자리 까지 표시)
+			String hitRatio = null;
+			String similarityLevel = null;
+			double detailServiceSimilarity = totalDetailValue;
+			if(displayMode.equals("Function Based")){	//기능 기반 디스플레이 모드
+				hitRatio = String.format("%.2f", basicServiceSimilarity);
+				similarityLevel = functionalSimilarityLevel;
+			}
+			else if(displayMode.equals("Attribute Based")){	//속성 기반 디스플레이 모드
+				hitRatio = String.format("%.2f", detailServiceSimilarity);
+				similarityLevel = detailSimilarityLevel;
+			}
+			else if(displayMode.equals("All(Function+Attribute)")){	//기능 + 속성 기반 디스플레이 모드
+				hitRatio = String.format("%.2f", (detailServiceSimilarity+basicServiceSimilarity)/2);
+				similarityLevel = detailSimilarityLevel;
+			}
+			//결과 화면에 표시
+			similarityCheckScreen.setMappingResult(hitRatio, similarityLevel, displayMode, true);
+			///////////////////////////////////////////////////////////////////////////////////
+		}
+	}
+	public void processMatch(String[] firstServicePropertyList, String[] secondServicePropertyList){
+		//같은 속성 개수
+		int matchPropertyNumber = 0;
+		//필수속성
+		double mandatoryServiceSimilarity = 0.0;
+		//부가속성
+		double secondaryServiceSimilarity = 0.0;
+		
+		//2개의 서비스들의 속성 비교
+		for(int propertyListIndex = 0; propertyListIndex < (firstServicePropertyList.length)-2; propertyListIndex++){
+
+			//2개 서비스들의 속성이 일치하면
+			if(firstServicePropertyList[propertyListIndex].compareTo(secondServicePropertyList[propertyListIndex]) == 0){				
+
+				//속성이 MandatoryFunction 이면
+				if(propertyListIndex == 10){
+					//MandatoryFunction의 값을 저장
+					String firstServiceMandatoryFunction = firstServicePropertyList[propertyListIndex];
+					String secondServiceMandatoryFunction = secondServicePropertyList[propertyListIndex];
+
+					//전체 문자열 길이 - 콤마 제거한 문자열 길이 = 콤마 개수
+					int firstServiceCommaCount = 
+							firstServiceMandatoryFunction.length() - (firstServiceMandatoryFunction.replaceAll(",", "")).length();
+					int secondServiceCommaCount = 
+							secondServiceMandatoryFunction.length() - (secondServiceMandatoryFunction.replaceAll(",", "")).length();
+
+					//Functional Attributes 처리
+					int matchMandatoryFunctionNumber = handleFunctionalAttributes(
+							firstServiceCommaCount, secondServiceCommaCount, firstServiceMandatoryFunction, secondServiceMandatoryFunction);
+
+					//(일치된 속성 개수 * 2 * 75) / (첫번째 서비스의 필수 속성들 개수 + 두번째 서비스의 필수 속성들 개수)
+					mandatoryServiceSimilarity = 
+							(double)(matchMandatoryFunctionNumber*2*75) / ((firstServiceCommaCount+1) + (secondServiceCommaCount+1));
+					totalMandatoryValue += mandatoryServiceSimilarity;
+				}
+				//속성이 SecondaryFunction 이면
+				else if(propertyListIndex == 11){
+					//SecondaryFunction의 값을 저장
+					String firstServiceMandatoryFunction = firstServicePropertyList[propertyListIndex];
+					String secondServiceMandatoryFunction = secondServicePropertyList[propertyListIndex];
+
+					//전체 문자열 길이 - 콤마 제거한 문자열 길이
+					int firstServiceCommaCount = 
+							firstServiceMandatoryFunction.length() - (firstServiceMandatoryFunction.replaceAll(",", "")).length();
+					int secondServiceCommaCount = 
+							secondServiceMandatoryFunction.length() - (secondServiceMandatoryFunction.replaceAll(",", "")).length();
+
+					//Functional Attributes 처리
+					int matchMandatoryFunctionNumber = handleFunctionalAttributes(
+							firstServiceCommaCount, secondServiceCommaCount, firstServiceMandatoryFunction, secondServiceMandatoryFunction);
+
+					//(일치된 속성 개수 * 2 * 25) / (첫번째 서비스의 부가 속성들 개수 + 두번째 서비스의 부가 속성들 개수)
+					secondaryServiceSimilarity = 
+							(double)(matchMandatoryFunctionNumber*2*25) / ((firstServiceCommaCount+1) + (secondServiceCommaCount+1));
+					totalSecondaryValue += secondaryServiceSimilarity;
+				}
+				//Identifying Attributes 이거나 Selective Attributes 또는 Relational Attributes이면
+				else{
+					matchPropertyNumber++;
+					//총 일치횟수 증가
+					matchedTotalNumber += matchPropertyNumber;
+				}
+			}
+			else{}
+		}	
+		//속성 기반 의미적 유사성 적중률 측정
+		double detailServiceSimilarity = 0.0;
+		detailServiceSimilarity = (double)(matchPropertyNumber * 100) / 13; //속성 기반 의미적(상세) 유사성(식별, 선택) - 13개 속성
+		totalDetailValue += detailServiceSimilarity;
+	}
+	
+	//Functional Attributes 처리
+	public int handleFunctionalAttributes(int firstServiceCommaCount, int secondServiceCommaCount,
+			                              String firstServiceMandatoryFunction, String secondServiceMandatoryFunction){		
+		//콤마를 제외한 기능을 나타내는 문자열을 담기 위한 배열 선언
+		String[] firstServiceFunctionString = new String[firstServiceCommaCount + 1];
+		String[] secondServiceFunctionString = new String[secondServiceCommaCount + 1];
+
+		//첫번째 서비스의 MandatoryFunction속성의 기능들 추출
+		extractMandatoryFunction(firstServiceFunctionString, firstServiceMandatoryFunction);
+
+		//두번째 서비스의 MandatoryFunction속성의 기능들 추출
+		extractMandatoryFunction(secondServiceFunctionString, secondServiceMandatoryFunction);
+
+		//각각 서비스들의 MandatoryFunction을 비교
+		int matchMandatoryFunctionNumber = 0;
+		for(int firstFunctionIndex = 0; firstFunctionIndex < firstServiceFunctionString.length; firstFunctionIndex++){
+			for(int secondFunctionIndex = 0; secondFunctionIndex < secondServiceFunctionString.length; secondFunctionIndex++){
+				//2개의 서비스들의 기능이 일치하면
+				if((firstServiceFunctionString[firstFunctionIndex]).equals(secondServiceFunctionString[secondFunctionIndex])){
+					matchMandatoryFunctionNumber++;	//일치 횟수를 증가
+					break;
+				}
+			}
+		}
+		return matchMandatoryFunctionNumber;		
+	}
+	//MandatoryFunction속성의 기능들 추출
+	public void extractMandatoryFunction(String[] serviceFunctionString, String serviceMandatoryFunction){
+
+		int findIndex = -1;
+		int functionStringIndex = 0;
+		while((findIndex = serviceMandatoryFunction.indexOf(",")) != -1){	//문자열안에 콤마가 있다면
+
+			//콤마 전까지의 문자열을 저장
+			serviceFunctionString[functionStringIndex++] = serviceMandatoryFunction.substring(0, findIndex);
+
+			//콤마 다음 인덱스부터 끝까지 문자열을 새로 만듬
+			serviceMandatoryFunction = serviceMandatoryFunction.substring(findIndex+1);
+		}
+		//마지막 문자열 저장
+		serviceFunctionString[functionStringIndex] = serviceMandatoryFunction;
+	}
+}

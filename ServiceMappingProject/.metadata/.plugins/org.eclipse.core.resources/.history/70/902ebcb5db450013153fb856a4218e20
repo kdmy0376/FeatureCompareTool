@@ -1,0 +1,196 @@
+package MenuControl;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
+
+import Main.MainFrame;
+import Menu_Delete.DeleteScreen;
+import Menu_Register.RegisterScreen;
+import Menu_Update.UpdateScreen;
+import Search.SearchServiceDialog;
+import SimilarityCheck.SimilarityCheckScreen;
+
+public class ToolMenu implements SelectionListener{	
+	private Menu menuBar = null;
+	
+	//File 메뉴 변수
+	private MenuItem cascadeFileMenu = null;			
+	private Menu fileMenu = null;
+	private MenuItem openFirstServiceItem = null;
+	private MenuItem openSecondServiceItem = null;
+	private MenuItem searchServiceItem = null;
+	private MenuItem exitItem = null;
+	
+	//Edit 메뉴 변수
+	private MenuItem cascadeEditMenu = null;			
+	private Menu editMenu = null;
+	private MenuItem registerItem = null;
+	private MenuItem updateItem = null;
+	private MenuItem deleteItem = null;	
+	
+	//Tool 메뉴 변수
+	private MenuItem cascadeToolMenu = null;			
+	private Menu toolMenu = null;
+	private MenuItem similarityCheckItem = null;
+	
+	//Help 메뉴 변수
+	private MenuItem cascadeHelpMenu = null;			
+	private Menu helpMenu = null;
+	private MenuItem informationItem = null;
+	
+	//64비트/32비트 차이?
+	//	Case문 변수
+	//	private final int OpenFirstService = 1;				
+	//	private final int OpenSecondService = 2;
+	//	private final int SearchService = 3;
+	//	private final int Exit = 4;
+	//	private final int Register = 5;
+	//  private final int Update = 6;
+	//  private final int Delete = 7; 
+	//  private final int SimilarityCheck = 8; 
+	//  private final int Information = 9;
+    
+    private SimilarityCheckScreen similarityCheckScreen = null;
+	
+	//생성자
+	public ToolMenu(){
+		this.initializeMember();
+		this.setFileMenu(menuBar);	
+		this.setEditMenu(menuBar);	
+		this.setToolMenu(menuBar);	
+		this.setHelpMenu(menuBar);
+		//this.setMenuId();
+		this.setEventHandler();
+	}
+	//멤버 변수 초기화
+	public void initializeMember(){				
+		menuBar = new Menu(MainFrame.shell, SWT.BAR);	
+		similarityCheckScreen = new SimilarityCheckScreen();
+	}
+	//File 메뉴 생성
+	public void setFileMenu(Menu menuBar){
+		cascadeFileMenu = new MenuItem(menuBar, SWT.CASCADE);
+		cascadeFileMenu.setText("&File");
+
+		fileMenu = new Menu(MainFrame.shell, SWT.DROP_DOWN);
+		cascadeFileMenu.setMenu(fileMenu);
+		openFirstServiceItem = new MenuItem(fileMenu, SWT.PUSH); 
+		openFirstServiceItem.setText("Open F&irst Service");
+		openSecondServiceItem = new MenuItem(fileMenu, SWT.PUSH);
+		openSecondServiceItem.setText("&Open S&econd Service");
+		searchServiceItem = new MenuItem(fileMenu, SWT.PUSH);
+		searchServiceItem.setText("&Service Search");
+		exitItem = new MenuItem(fileMenu, SWT.PUSH);
+		exitItem.setText("&Exit");
+	}
+	//Edit 메뉴 생성
+	public void setEditMenu(Menu menuBar){
+		cascadeEditMenu = new MenuItem(menuBar, SWT.CASCADE); 
+		cascadeEditMenu.setText("&Edit");
+
+		editMenu = new Menu(MainFrame.shell, SWT.DROP_DOWN);
+		cascadeEditMenu.setMenu(editMenu);		
+		registerItem = new MenuItem(editMenu, SWT.PUSH);
+		registerItem.setText("&Register Service");
+		updateItem = new MenuItem(editMenu, SWT.PUSH);
+		updateItem.setText("&Update Service");
+		deleteItem = new MenuItem(editMenu, SWT.PUSH);
+		deleteItem.setText("&Delete Service");
+	}
+	//Tool 메뉴 생성
+	public void setToolMenu(Menu menuBar){
+		cascadeToolMenu = new MenuItem(menuBar, SWT.CASCADE);
+		cascadeToolMenu.setText("&Tool");
+
+		toolMenu = new Menu(MainFrame.shell, SWT.DROP_DOWN);
+		cascadeToolMenu.setMenu(toolMenu);
+		similarityCheckItem = new MenuItem(toolMenu, SWT.PUSH);
+		similarityCheckItem.setText("Similarity Check");
+	}
+	//Help 메뉴 생성
+	public void setHelpMenu(Menu menuBar){
+		cascadeHelpMenu = new MenuItem(menuBar, SWT.CASCADE);
+		cascadeHelpMenu.setText("&Help");
+
+		helpMenu = new Menu(MainFrame.shell, SWT.DROP_DOWN);
+		cascadeHelpMenu.setMenu(helpMenu);
+		informationItem = new MenuItem(helpMenu, SWT.PUSH);
+		informationItem.setText("Information");
+		
+		MainFrame.shell.setMenuBar(menuBar);
+	}
+//64비트 SWT가 문제?
+//	//메뉴 아이템 아이디 설정
+//	public void setMenuId(){
+//		openFirstServiceItem.setID(1);
+//		openSecondServiceItem.setID(2);
+//		searchServiceItem.setID(3);
+//		exitItem.setID(4);		
+//		registerItem.setID(5);
+//		updateItem.setID(6);
+//		deleteItem.setID(7);		
+//		similarityCheckItem.setID(8);
+//		informationItem.setID(9);
+//	}
+	//이벤트 처리기 등록
+	public void setEventHandler(){
+		openFirstServiceItem.addSelectionListener(this);
+		openSecondServiceItem.addSelectionListener(this);
+		searchServiceItem.addSelectionListener(this);
+		exitItem.addSelectionListener(this);
+		registerItem.addSelectionListener(this);
+		updateItem.addSelectionListener(this);
+		deleteItem.addSelectionListener(this);
+		similarityCheckItem.addSelectionListener(this);
+		informationItem.addSelectionListener(this);
+	}
+	//이벤트 처리기
+	public void widgetSelected(SelectionEvent e){
+		if(e.getSource() == openFirstServiceItem){
+			MainFrame.stackLayout.topControl = similarityCheckScreen;
+			MainFrame.shell.layout();
+			new SelectServiceDialog("First Service");
+		}
+		else if(e.getSource() == openSecondServiceItem){
+			MainFrame.stackLayout.topControl = similarityCheckScreen;
+			MainFrame.shell.layout();
+			new SelectServiceDialog("Second Service");
+		}
+		else if(e.getSource() == searchServiceItem){
+			MainFrame.stackLayout.topControl = new Composite(MainFrame.shell, SWT.NONE);
+			MainFrame.shell.layout();
+			new SearchServiceDialog();
+		}
+		else if(e.getSource() == exitItem){
+			MainFrame.shell.getDisplay().dispose();
+		}
+		else if(e.getSource() == registerItem){
+			MainFrame.stackLayout.topControl = new RegisterScreen();        		
+			MainFrame.shell.layout();
+		}
+		else if(e.getSource() == updateItem){
+			MainFrame.stackLayout.topControl = new UpdateScreen();
+			MainFrame.shell.layout();
+		}
+		else if(e.getSource() == deleteItem){
+			MainFrame.stackLayout.topControl = new DeleteScreen();
+			MainFrame.shell.layout();
+		}
+		else if(e.getSource() == similarityCheckItem){
+			MainFrame.stackLayout.topControl = similarityCheckScreen;
+			MainFrame.shell.layout();
+		}
+		else if(e.getSource() == informationItem){
+			MessageBox informationMessageBox = new MessageBox(MainFrame.shell, SWT.ICON_INFORMATION);
+			informationMessageBox.setText("Information");
+			informationMessageBox.setMessage("Semantic similarity analyser of service");
+			informationMessageBox.open();
+		}
+	}
+	public void widgetDefaultSelected(SelectionEvent e){}		
+}

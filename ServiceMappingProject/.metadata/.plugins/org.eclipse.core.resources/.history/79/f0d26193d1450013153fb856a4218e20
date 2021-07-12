@@ -1,0 +1,141 @@
+//2013. 10. 4.
+//
+package DataBase;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.MessageBox;
+
+import Main.MainFrame;
+
+public class DBWork_Register {
+
+	//Constructor
+	public DBWork_Register(String companyName, String parentServiceName, String childServiceName,
+		String name, String definition, String domainTask, String sType, String synonymousNames,
+		double priority, String condition, String interfaceName, String businessProcess, String component,
+		String mandatoryFunction, String secondaryFunction, String servicePropertyString, 
+		String andProperty, String orProperty){
+		
+		//새로운 서비스 등록 함수 호출
+		this.addService(companyName, parentServiceName, childServiceName, name, definition, domainTask, sType, 
+			synonymousNames, priority, condition, interfaceName, businessProcess, component, mandatoryFunction, 
+			secondaryFunction, servicePropertyString, andProperty, orProperty);
+	} //Class DBRegister Constructor end
+
+	//새로운 서비스 등록
+	private void addService(String companyName, String parentServiceName, String childServiceName,		  //등록할 서비스 위치 속성
+		String name, String definition, String domainTask, String sType, String synonymousNames,		  //Identifying 속성
+		double priority, String condition, String interfaceName, String businessProcess, String component,
+		String mandatoryFunction, String secondaryFunction, 											  //Functional 속성
+		String servicePropertyString,																	  //Selective 속성
+		String andProperty, String orProperty)															  //Relational 속성
+	{
+		//테이블 생성
+		new DBTable(companyName);
+		
+		//서비스 삽입 쿼리문
+		String insertNewServiceQuery = "INSERT INTO " + companyName + 
+									   " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,? ,? ,? ,?, ?, ?, ?)";
+		try{
+			//부모 서비스는 기입, 자식 서비스 공란
+			if(!(parentServiceName.equals("No_Parent")) && childServiceName.equals("No_Child")){			
+				processParentService(name, companyName, parentServiceName);
+			}
+			//자식 서비스는 기입, 부모 서비스 공란
+			else if(parentServiceName.equals("No_Parent") && !(childServiceName.equals("No_Child"))){		
+				processChildService(name, companyName, childServiceName);
+			}
+			//부모, 자식 서비스 둘다 기입시
+			else if(!(parentServiceName.equals("No_Parent")) && !(childServiceName.equals("No_Child"))){	
+				processParentService(name, companyName, parentServiceName);
+				processChildService(name, companyName, childServiceName);
+			}
+
+			//Identifying Attributes
+			PreparedStatement insertNewService = DBConnection.connection.prepareStatement(insertNewServiceQuery);
+			insertNewService.setString(1, name);		//1,2,3, ~ 17은 필드
+			insertNewService.setString(2, definition);
+			insertNewService.setString(3, domainTask);
+			insertNewService.setString(4, sType);
+			insertNewService.setString(5, synonymousNames);
+			insertNewService.setDouble(6, priority);
+			insertNewService.setString(7, condition);
+			insertNewService.setString(8, interfaceName);
+			insertNewService.setString(9, businessProcess);
+			insertNewService.setString(10, component);
+
+			//Functional Attributes
+			insertNewService.setString(11, mandatoryFunction);
+			insertNewService.setString(12, secondaryFunction);
+
+			//Selective Attributes
+			insertNewService.setString(13, servicePropertyString);
+
+			//Relational Attributes
+			insertNewService.setString(14, andProperty);
+			insertNewService.setString(15, orProperty);
+
+			//등록할 서비스 위치 속성
+			insertNewService.setString(16, parentServiceName);
+			insertNewService.setString(17, childServiceName);
+			insertNewService.executeUpdate();	
+
+			//등록 성공 메시지 보여주기
+			MessageBox createTableMessageBox = new MessageBox(MainFrame.shell, SWT.ICON_INFORMATION);
+			createTableMessageBox.setText("Success");
+			createTableMessageBox.setMessage("Registration Success");
+			createTableMessageBox.open();	//성공 메시지 박스 표시
+		}
+		catch(SQLException e){
+			e.printStackTrace();
+			//등록 실패 메시지 보여주기
+			MessageBox errorMessageBox = new MessageBox(MainFrame.shell, SWT.ICON_ERROR);
+			errorMessageBox.setText("Failed");
+			errorMessageBox.setMessage("Registration Failed");
+			errorMessageBox.open();	//테이블 생성 성공 메시지 박스 표시
+		}				
+	} //addService end
+	
+	//등록시 부모 서비스 기입 처리
+	private void processParentService(String name, String companyName, String parentServiceName) throws SQLException{
+		String searchServiceQuery = "SELECT ChildService from "+companyName+" where Name = '"+parentServiceName+"'";
+		Statement searchStatement = DBConnection.connection.createStatement();
+		ResultSet searchResultSet = searchStatement.executeQuery(searchServiceQuery);
+		
+		String childService = null;
+		while(searchResultSet.next()){ childService = searchResultSet.getString(1); }
+		
+		if(!(childService.equals("No_Child"))){	childService += ","+name; } //자식 서비스가 있다면
+		else{ childService = name; } //자식 서비스가 없는 상태이면
+
+		String updateChildServiceQuery = "UPDATE "+companyName+" SET ChildService = ? where Name = ?";
+		PreparedStatement updateChildStatement = DBConnection.connection.prepareStatement(updateChildServiceQuery);
+		updateChildStatement.setString(1, childService);
+		updateChildStatement.setString(2, parentServiceName);
+		updateChildStatement.executeUpdate();
+	} //processParentService end
+	
+	//등록시 자식 서비스 기입 처리
+	private static void processChildService(String name, String companyName, String childServiceName) throws SQLException{
+		String searchServiceQuery = "SELECT ParentService from "+companyName+" where Name = '"+childServiceName+"'";
+		Statement searchStatement = DBConnection.connection.createStatement();
+		ResultSet searchResultSet = searchStatement.executeQuery(searchServiceQuery);
+		
+		String parentService = null;
+		while(searchResultSet.next()){ parentService = searchResultSet.getString(1); }
+		
+		if(!(parentService.equals("No_Parent"))){ parentService += ","+name; } //부모 서비스가 있다면
+		else{ parentService = name;	} //부모 서비스가 없는 상태이면
+
+		String updateParentQuery = "UPDATE "+companyName+" SET ParentService = ? where Name = ?";
+		PreparedStatement updateParentStatement = DBConnection.connection.prepareStatement(updateParentQuery);
+		updateParentStatement.setString(1, parentService);
+		updateParentStatement.setString(2, childServiceName);
+		updateParentStatement.executeUpdate();
+	} //processChildService end
+}

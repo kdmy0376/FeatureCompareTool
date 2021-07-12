@@ -1,0 +1,478 @@
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Text;
+
+public class SimilarityCheckScreen extends Composite implements SelectionListener{
+	private GridLayout gridLayout = null;
+	private Color labelColor = null;
+	private Color buttonColor = null;
+	private Font groupFont = null;
+	private Font buttonFont = null;
+	static Text openFirstCompanyText = null;
+	static Text openFirstServiceText = null;
+	static Text openSecondCompanyText = null;
+	static Text openSecondServiceText = null;
+	private Button openFirstServiceButton = null;	
+	private Button openSecondServiceButton = null;
+	private Button analyzeButton = null;
+	private Button initialButton = null;
+	private Button cancelButton = null;
+	private Group serviceAnalysisResultGroup = null;
+	private Button selfRadioButton = null;
+	private Button allServiceRadioButton = null;
+	private Button functionBasedCheckButton = null; 
+	private Button propertyBasedCheckButton = null;
+	private Button allCheckButton = null;
+	private Group canvasGroup = null;
+	private Group functionBasedGroup = null;
+	private Group propertyBasedGroup = null;
+	private Group resultGroup = null;
+	private Label hitRatioLabel = null;
+	private Label similarityLevelLabel = null;
+	private Label contentLabel6 = null;
+	private Label contentLabel2 = null;
+	
+	//생성자
+	public SimilarityCheckScreen(){
+		super(MainFrame.shell, SWT.NONE);
+		this.initializeMember();
+		this.setLayout(gridLayout);
+		this.setInputFeatureForm();
+		this.setServiceAnalysisResult();
+		this.setButton();
+		this.setEventHandler();
+	}
+	//멤버 변수 초기화
+	public void initializeMember(){
+		gridLayout = new GridLayout(1, false);
+		labelColor = new Color(this.getParent().getDisplay(), 180,230,240);
+		buttonColor = new Color(this.getParent().getDisplay(), 70,210,210);
+		groupFont = new Font(this.getParent().getDisplay(), "Miriam", 11, SWT.BOLD);
+		buttonFont = new Font(this.getParent().getDisplay(), "Miriam", 10, SWT.BOLD);
+	}
+	//휘처 입력 폼
+	public void setInputFeatureForm(){
+		Group inputServiceGroup = new Group(this, SWT.SHADOW_ETCHED_IN);
+		inputServiceGroup.setText("Input Service");		 
+		inputServiceGroup.setFont(groupFont);
+		gridLayout = new GridLayout(7, false);
+		inputServiceGroup.setLayout(gridLayout);		
+		inputServiceGroup.setLayoutData(WidgetProperty.setGridLayoutProperty(SWT.FILL, true));
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		Label openFirstCompanyLabel = new Label(inputServiceGroup, SWT.BORDER);	//첫번째 회사 열기
+		openFirstCompanyLabel.setText("First Company:");		
+		openFirstCompanyLabel.setBackground(labelColor);
+		openFirstCompanyLabel.setLayoutData(WidgetProperty.setGridLayoutProperty(100));
+		openFirstCompanyText = new Text(inputServiceGroup, SWT.BORDER);
+		openFirstCompanyText.setEnabled(false);
+		openFirstCompanyText.setLayoutData(WidgetProperty.setGridLayoutProperty(2, 130, SWT.FILL, true));
+		
+		Label openFirstServiceLabel = new Label(inputServiceGroup, SWT.BORDER);	//첫번째 서비스 열기
+		openFirstServiceLabel.setText("First Service:");		
+		openFirstServiceLabel.setBackground(labelColor);
+		openFirstServiceLabel.setLayoutData(WidgetProperty.setGridLayoutProperty(90));
+		openFirstServiceText = new Text(inputServiceGroup, SWT.BORDER); 
+		openFirstServiceText.setEnabled(false);
+		openFirstServiceText.setLayoutData(WidgetProperty.setGridLayoutProperty(2, 170, SWT.FILL, true));
+		
+		openFirstServiceButton = new Button(inputServiceGroup, SWT.PUSH);	//GetService 버튼
+		openFirstServiceButton.setText("Get Service");
+		openFirstServiceButton.setBackground(buttonColor);
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		Label openSecondCompanyLabel = new Label(inputServiceGroup, SWT.BORDER);	//두번째 회사 열기
+		openSecondCompanyLabel.setText("Second Company:");		
+		openSecondCompanyLabel.setBackground(labelColor);
+		openSecondCompanyLabel.setLayoutData(WidgetProperty.setGridLayoutProperty(100));
+		openSecondCompanyText = new Text(inputServiceGroup, SWT.BORDER);
+		openSecondCompanyText.setEnabled(false);
+		openSecondCompanyText.setLayoutData(WidgetProperty.setGridLayoutProperty(2, 130, SWT.FILL, true));
+		
+		Label openSecondServiceLabel = new Label(inputServiceGroup, SWT.BORDER);	//두번째 서비스 열기
+		openSecondServiceLabel.setText("Second Service:");		
+		openSecondServiceLabel.setBackground(labelColor);
+		openSecondServiceLabel.setLayoutData(WidgetProperty.setGridLayoutProperty(90));
+		openSecondServiceText = new Text(inputServiceGroup, SWT.BORDER);
+		openSecondServiceText.setEnabled(false);
+		openSecondServiceText.setLayoutData(WidgetProperty.setGridLayoutProperty(2, 170, SWT.FILL, true));
+		
+		openSecondServiceButton = new Button(inputServiceGroup, SWT.NONE);	//GetService 버튼
+		openSecondServiceButton.setText("Get Service");
+		openSecondServiceButton.setBackground(buttonColor);
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		Label optionLabel = new Label(inputServiceGroup, SWT.BORDER);	//옵션
+		optionLabel.setText("Analysis Option:");	
+		optionLabel.setBackground(labelColor);
+		optionLabel.setLayoutData(WidgetProperty.setGridLayoutProperty(100));
+		
+		selfRadioButton = new Button(inputServiceGroup, SWT.RADIO);	//자기 자신의 서비스만		
+		selfRadioButton.setText("Semantic Self Similarity");
+		selfRadioButton.setSelection(true);
+		selfRadioButton.setLayoutData(WidgetProperty.setGridLayoutNotGrabProperty(2, SWT.LEFT));
+				
+		allServiceRadioButton = new Button(inputServiceGroup, SWT.RADIO);	//서비스 전체
+		allServiceRadioButton.setText("Semantic Boundary Similarity");
+		allServiceRadioButton.setLayoutData(WidgetProperty.setGridLayoutNotGrabProperty(4, SWT.LEFT));
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		Label label = new Label(inputServiceGroup, SWT.BORDER);	//디스플레이 모드
+		label.setText("Display Mode:");	
+		label.setBackground(labelColor);
+		label.setLayoutData(WidgetProperty.setGridLayoutProperty(100));
+		
+		functionBasedCheckButton = new Button(inputServiceGroup, SWT.CHECK);	//기능 기반	
+		functionBasedCheckButton.setText("Function based");
+		functionBasedCheckButton.setSelection(true);
+		functionBasedCheckButton.setLayoutData(WidgetProperty.setGridLayoutNotGrabProperty(2, SWT.LEFT));
+				
+		allCheckButton = new Button(inputServiceGroup, SWT.CHECK);	//전체
+		allCheckButton.setText("Total property based");
+		allCheckButton.setLayoutData(WidgetProperty.setGridLayoutNotGrabProperty(2, SWT.LEFT));
+		
+		analyzeButton = new Button(inputServiceGroup, SWT.PUSH);	//분석 버튼
+		analyzeButton.setText("Analyze");
+		analyzeButton.setBackground(new Color(this.getParent().getDisplay(), 255,120,120));
+		analyzeButton.setFont(buttonFont);
+		analyzeButton.setLayoutData(WidgetProperty.setGridLayoutProperty(3, 73, SWT.RIGHT, false));
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		///////////////////////////////////////////////////
+//		openFirstServiceText.setText("asd");
+//		openFirstCompanyText.setText("asd");
+//		openSecondServiceText.setText("dsd");
+//		openSecondCompanyText.setText("asd");
+		
+	}
+	//휘처 진단 결과 표시
+	public void setServiceAnalysisResult(){
+		serviceAnalysisResultGroup = new Group(this, SWT.SHADOW_ETCHED_IN);
+		serviceAnalysisResultGroup.setText("Analyzed Result");
+		serviceAnalysisResultGroup.setFont(groupFont);
+		serviceAnalysisResultGroup.setLayout(new GridLayout(2, false));
+		GridData gridData = new GridData();
+		gridData.verticalAlignment = SWT.FILL;
+		gridData.horizontalAlignment = SWT.FILL;
+		gridData.grabExcessVerticalSpace = true;
+		serviceAnalysisResultGroup.setLayoutData(gridData);
+		
+		//왼쪽 그룹(텍스트 표시용)
+		Group textResultGroup = new Group(serviceAnalysisResultGroup, SWT.SHADOW_ETCHED_IN);
+		textResultGroup.setLayout(new GridLayout(1, false));
+		gridData = new GridData();
+		gridData.widthHint = 75;
+		gridData.verticalAlignment = SWT.FILL;
+		gridData.horizontalAlignment = SWT.FILL;
+		gridData.grabExcessVerticalSpace = true;
+		gridData.grabExcessHorizontalSpace = true;
+		textResultGroup.setLayoutData(gridData);
+		
+		//기능 기반 의미적 유사성 그룹
+		functionBasedGroup = new Group(textResultGroup, SWT.SHADOW_ETCHED_IN);
+		functionBasedGroup.setText("▶Function based Semantics Similarity analysis");
+		functionBasedGroup.setFont(new Font(this.getParent().getDisplay(), "Miriam", 11, SWT.BOLD));
+		gridLayout = new GridLayout(1, false); 
+		functionBasedGroup.setLayout(gridLayout);
+		gridData = new GridData();
+		gridData.widthHint = 280;
+		gridData.verticalIndent = 10;
+		gridData.horizontalIndent = 5;
+		functionBasedGroup.setLayoutData(gridData); 
+		
+		//기능 기반 내용
+		Label contentLabel1 = new Label(functionBasedGroup, SWT.NONE);
+		contentLabel1.setText("- Compare attribute type : Functional");
+		gridData = new GridData();
+		gridData.horizontalIndent = 10;
+		contentLabel1.setLayoutData(gridData); 
+		
+		contentLabel2 = new Label(functionBasedGroup, SWT.NONE);
+		contentLabel2.setText("- Compare attribute number : 2");
+		gridData = new GridData();
+		gridData.horizontalIndent = 10;
+		contentLabel2.setLayoutData(gridData); 
+		
+		Label contentLabel3 = new Label(functionBasedGroup, SWT.NONE);
+		contentLabel3.setText("(Mandatory and Additional function)");
+		gridData = new GridData();
+		gridData.horizontalIndent = 18;
+		contentLabel3.setLayoutData(gridData); 
+		
+		//속성 기반 의미적 유사성 그룹
+		propertyBasedGroup = new Group(textResultGroup, SWT.SHADOW_ETCHED_IN);
+		propertyBasedGroup.setText("▶Property based Semantics Similarity analysis");
+		propertyBasedGroup.setFont(new Font(this.getParent().getDisplay(), "Miriam", 11, SWT.BOLD));
+		gridLayout = new GridLayout(1, false); 
+		propertyBasedGroup.setLayout(gridLayout);
+		gridData = new GridData();
+		gridData.widthHint = 280;
+		gridData.verticalIndent = 10;
+		gridData.horizontalIndent = 5;
+		propertyBasedGroup.setLayoutData(gridData); 
+		
+		//기능 기반 내용
+		Label contentLabel4 = new Label(propertyBasedGroup, SWT.NONE);
+		contentLabel4.setText("- Compare attribute : Identifying, Functional,\n");
+		gridData = new GridData();
+		gridData.horizontalIndent = 10;
+		contentLabel4.setLayoutData(gridData); 
+
+		Label contentLabel5 = new Label(propertyBasedGroup, SWT.NONE);
+		contentLabel5.setText("Selective and Relational");
+		gridData = new GridData();
+		gridData.horizontalIndent = 128;
+		contentLabel5.setLayoutData(gridData); 
+
+		contentLabel6 = new Label(propertyBasedGroup, SWT.NONE);
+		contentLabel6.setText("- Compare attribute number : 15");
+		gridData = new GridData();
+		gridData.horizontalIndent = 10;
+		contentLabel6.setLayoutData(gridData);
+		
+		//최종 적중율 결과 그룹
+		resultGroup = new Group(textResultGroup, SWT.SHADOW_ETCHED_IN);
+		resultGroup.setText("▶Result For Analysis");
+		resultGroup.setFont(new Font(this.getParent().getDisplay(), "Miriam", 11, SWT.BOLD));
+		gridLayout = new GridLayout(1, false); 
+		resultGroup.setLayout(gridLayout);
+		gridData = new GridData();
+		gridData.widthHint = 340;
+		gridData.verticalIndent = 10;
+		gridData.horizontalIndent = 5;
+		resultGroup.setLayoutData(gridData);
+		
+		//적중율 표시
+		hitRatioLabel = new Label(resultGroup, SWT.NONE);
+		hitRatioLabel.setText("- Hit Ratio(%) : 50%");
+		hitRatioLabel.setFont(new Font(this.getParent().getDisplay(), "Miriam", 14, SWT.BOLD));
+		hitRatioLabel.setForeground(new Color(this.getParent().getDisplay(), 255,0,0));
+		gridData = new GridData();
+		gridData.horizontalIndent = 10;
+		gridData.widthHint = 250;
+		hitRatioLabel.setLayoutData(gridData);
+		
+		//유사성 레벨 표시
+		similarityLevelLabel = new Label(resultGroup, SWT.NONE);
+		similarityLevelLabel.setText("- Similarity Level : High");
+		similarityLevelLabel.setFont(new Font(this.getParent().getDisplay(), "Miriam", 14, SWT.BOLD));
+		similarityLevelLabel.setForeground(new Color(this.getParent().getDisplay(), 255,0,0));
+		gridData = new GridData();
+		gridData.horizontalIndent = 10;
+		gridData.widthHint = 250;
+		similarityLevelLabel.setLayoutData(gridData);
+		
+		//오른쪽 그룹(그래프 표시용)
+		canvasGroup = new Group(serviceAnalysisResultGroup, SWT.SHADOW_ETCHED_IN);
+		canvasGroup.setLayout(new GridLayout(1, false));
+		gridData = new GridData();
+		gridData.verticalAlignment = SWT.FILL;
+		gridData.horizontalAlignment = SWT.FILL;
+		gridData.grabExcessVerticalSpace = true;
+		gridData.grabExcessHorizontalSpace = true;
+		canvasGroup.setLayoutData(gridData);
+		
+		//그룹 안보이기
+		functionBasedGroup.setVisible(false);
+		propertyBasedGroup.setVisible(false);
+		resultGroup.setVisible(false);
+	}
+	//버튼 생성
+	public void setButton(){
+		Group buttonGroup = new Group(this, SWT.SHADOW_ETCHED_IN);
+		GridLayout gridLayout = new GridLayout(4, false);
+		buttonGroup.setLayout(gridLayout);
+		GridData gridData = new GridData();
+		gridData.horizontalAlignment = SWT.FILL;
+		buttonGroup.setLayoutData(gridData);
+		
+		initialButton = new Button(buttonGroup, SWT.PUSH);	//초기화 버튼
+		initialButton.setBackground(buttonColor);
+		initialButton.setText("Initialize");
+		gridData = new GridData();
+		gridData.horizontalSpan = 2;
+		gridData.horizontalAlignment = SWT.RIGHT;
+		gridData.grabExcessHorizontalSpace = true;
+		initialButton.setLayoutData(gridData);
+
+		cancelButton = new Button(buttonGroup, SWT.PUSH);	//취소 버튼
+		cancelButton.setBackground(buttonColor);
+		cancelButton.setText("Cancel");	
+		gridData = new GridData();
+		gridData.horizontalSpan = 2;
+		gridData.horizontalAlignment = SWT.LEFT;
+		gridData.grabExcessHorizontalSpace = true;
+		cancelButton.setLayoutData(gridData);
+	}
+	//맵핑 결과 표시
+	public void setMappingResult(String hitRatio, String similarityLevel, String displayMode, boolean boundaryMode){
+		if(boundaryMode == true){
+			contentLabel2.setText("- Compare attribute number : 6");
+			contentLabel6.setText("- Compare attribute number : 45");
+		}
+		functionBasedGroup.setVisible(false);
+		propertyBasedGroup.setVisible(false);
+		resultGroup.setVisible(false);
+		
+		if(displayMode.equals("Function Based")){						//기능 기반 모드
+			functionBasedGroup.setVisible(true);
+			resultGroup.setVisible(true);
+		}
+		else if(displayMode.equals("Attribute Based")){					//속성 기반 모드
+			propertyBasedGroup.setVisible(true);
+			resultGroup.setVisible(true);
+		}
+		else if(displayMode.equals("All(Function+Attribute)")){			//기능 + 속성 기반 모드
+			functionBasedGroup.setVisible(true);
+			propertyBasedGroup.setVisible(true);
+			resultGroup.setVisible(true);
+		}
+		
+		hitRatioLabel.setText("- Hit Ratio(%) : "+hitRatio+"%");
+		similarityLevelLabel.setText("- Similarity Level : "+similarityLevel);
+		
+		//적중률 int로 변환
+		double hitRatioDouble = Double.parseDouble(hitRatio);
+		final int hitRatioInt = (int)hitRatioDouble;
+		
+		//그래프 그리기
+		canvasGroup.addPaintListener(new PaintListener() { 
+			public void paintControl(PaintEvent e) { 
+				//원그래프
+				int commonAngle = (int)((360*hitRatioInt)/100);
+				int variAngle = -(int)(360-commonAngle);
+
+				//색 안내 스트링
+				e.gc.setForeground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+				e.gc.setFont(new Font(SimilarityCheckScreen.this.getParent().getDisplay(), "Miriam", 10, SWT.BOLD));
+				e.gc.drawText("Similarity", 90, 33, true);
+				e.gc.drawText("Variability", 90, 53, true);
+
+				e.gc.setForeground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+				e.gc.drawText("0 / 100", 260, 195, true);
+				e.gc.drawLine(250, 200, 255, 200);
+				
+				e.gc.setForeground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+				e.gc.drawText("25(%)", 155, 90, true);
+				e.gc.drawLine(160, 110, 160, 105);
+
+				e.gc.setForeground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+				e.gc.drawText("50", 45, 195, true);
+				e.gc.drawLine(65, 200, 70, 200);
+
+				e.gc.setForeground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+				e.gc.drawText("75", 155, 300, true);
+				e.gc.drawLine(160, 290, 160, 295);
+
+				//색 안내 표시
+				e.gc.setBackground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_BLUE));
+				e.gc.fillRectangle(20, 35, 60, 10);
+
+				e.gc.setBackground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_RED));
+				e.gc.fillRectangle(20, 55, 60, 10);
+
+				//유사성, 비유사성 보이기
+				e.gc.setBackground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_BLUE));
+				e.gc.fillArc(70, 110, 180, 180, 0, commonAngle);
+
+				e.gc.setBackground(MainFrame.shell.getDisplay().getSystemColor(SWT.COLOR_RED));
+				e.gc.fillArc(70, 110, 180, 180, 360, variAngle);
+			} 
+		}); 
+		canvasGroup.redraw();
+	}
+	//이벤트 처리기 등록
+	public void setEventHandler(){
+		openFirstServiceButton.addSelectionListener(this);
+		openSecondServiceButton.addSelectionListener(this);
+		analyzeButton.addSelectionListener(this);
+		initialButton.addSelectionListener(this);
+		cancelButton.addSelectionListener(this);
+		functionBasedCheckButton.addSelectionListener(this);
+		allCheckButton.addSelectionListener(this);
+	}
+	//이벤트 처리기
+	public void widgetSelected(SelectionEvent e){
+		if(e.getSource() == openFirstServiceButton){		//첫번째 서비스
+			new SelectServiceDialog("First Service");
+		}else if(e.getSource() == openSecondServiceButton){	//두번째 서비스
+			new SelectServiceDialog("Second Service");
+		}else if(e.getSource() == analyzeButton){	//분석
+			if(openFirstServiceText.getText().length() > 0 && openSecondServiceText.getText().length() > 0){
+				
+				//분석 모드 설정
+				String analysisOption = null;
+				if(selfRadioButton.getSelection()){		
+					analysisOption = selfRadioButton.getText();			//Self
+				}else{
+					analysisOption = allServiceRadioButton.getText();	//All Services
+				}
+				
+				//디스플레이 모드 설정
+				String displayMode = null;
+				if(functionBasedCheckButton.getSelection()){
+					displayMode = functionBasedCheckButton.getText();
+				}else if(propertyBasedCheckButton.getSelection()){
+					displayMode = propertyBasedCheckButton.getText();
+				}else if(allCheckButton.getSelection()){
+					displayMode = allCheckButton.getText();
+				}
+				//맵핑 시작
+				new MappingServices(openFirstCompanyText.getText(), openSecondCompanyText.getText(),
+									openFirstServiceText.getText(), openSecondServiceText.getText(), 
+									analysisOption, displayMode, this);
+			}else{
+				MessageBox errorMessageBox = new MessageBox(MainFrame.shell, SWT.ICON_ERROR);
+				errorMessageBox.setText("Error");
+				errorMessageBox.setMessage("Enter the name of the service properly");
+				errorMessageBox.open();	
+			}
+		}else if(e.getSource() == initialButton){	//초기화
+			
+		}else if(e.getSource() == cancelButton){	//취소
+			MainFrame.stackLayout.topControl = new Composite(MainFrame.shell, SWT.NONE);
+			MainFrame.shell.layout();
+		}else if(e.getSource() == functionBasedCheckButton){
+			functionBasedCheckButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					propertyBasedCheckButton.setSelection(false);
+					allCheckButton.setSelection(false);
+				}
+			});
+		}else if(e.getSource() == propertyBasedCheckButton){
+			propertyBasedCheckButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					functionBasedCheckButton.setSelection(false);
+					allCheckButton.setSelection(false);
+				}
+			});
+		}else if(e.getSource() == allCheckButton){
+			allCheckButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					propertyBasedCheckButton.setSelection(false);
+					functionBasedCheckButton.setSelection(false);
+				}
+			});
+		}
+	}
+	public void widgetDefaultSelected(SelectionEvent e){}
+}

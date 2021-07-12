@@ -1,0 +1,60 @@
+package DataBase;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.MessageBox;
+
+import Main.MainFrame;
+
+public class DBWork_Delete {
+	//서비스 모두 삭제
+	public static void deleteAllService(){
+		String[] companyList = new ServiceQueries().setCompanyNameComboList();
+		for(int i=0; i<companyList.length; i++){
+			try{
+				PreparedStatement deleteCompanyStatement = DBConnection.connection.prepareStatement("drop table "+companyList[i]);	//회사명 삭제
+				deleteCompanyStatement.executeUpdate();
+			}catch(SQLException e){}
+		}
+		MessageBox deleteMessageBox = new MessageBox(MainFrame.shell, SWT.ICON_INFORMATION);
+		deleteMessageBox.setText("Delete All");
+		deleteMessageBox.setMessage("Delete All Success");
+		deleteMessageBox.open();
+	}
+	//서비스 삭제
+	public static void deleteService(String companyName, String serviceName){
+
+		String deleteQuery = "delete from " + companyName + " where Name = ?";
+		try{
+			PreparedStatement deleteServiceStatement = DBConnection.connection.prepareStatement(deleteQuery);
+			deleteServiceStatement.setString(1, serviceName);
+			deleteServiceStatement.executeUpdate();
+
+			Statement numberOfServiceStatement = DBConnection.connection.createStatement();
+			ResultSet numberOfServiceResultSet = numberOfServiceStatement.executeQuery("select count(*) from "+companyName);
+			int numberOfService = 0;
+			while(numberOfServiceResultSet.next()){
+				numberOfService = numberOfServiceResultSet.getInt(1);
+			}
+			if(numberOfService == 0){	//서비스가 없다면
+				PreparedStatement deleteCompanyStatement = DBConnection.connection.prepareStatement("drop table "+companyName);	//회사명 삭제
+				deleteCompanyStatement.executeUpdate();
+			}
+
+			MessageBox deleteMessageBox = new MessageBox(MainFrame.shell, SWT.ICON_INFORMATION);
+			deleteMessageBox.setText("Delete");
+			deleteMessageBox.setMessage("Delete Success");
+			deleteMessageBox.open();	
+		}
+		catch(SQLException sqlException){
+			MessageBox errorMessageBox = new MessageBox(MainFrame.shell, SWT.ICON_ERROR);
+			errorMessageBox.setText("Failed");
+			errorMessageBox.setMessage("Delete Failed");
+			errorMessageBox.open();	
+		}
+	}
+}
